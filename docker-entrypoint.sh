@@ -32,7 +32,6 @@ if [ "$1" = "qpidd" ]; then
     mkdir -p "$(dirname $QPIDD_SASL_DB)"
 
     if [[ "$QPIDD_ADMIN_USERNAME" && "$QPIDD_ADMIN_PASSWORD" ]]; then
-        echo "SASLDB"
         echo "$QPIDD_ADMIN_PASSWORD" | saslpasswd2 -f "$QPIDD_SASL_DB" -u QPID -p "$QPIDD_ADMIN_USERNAME"
         sasl_plain=1
         need_config=1
@@ -42,7 +41,6 @@ if [ "$1" = "qpidd" ]; then
     # SSL
     #####
     if [[ "$QPIDD_SSL_SERVER_PUBLIC_KEY" && "$QPIDD_SSL_SERVER_PRIVATE_KEY" ]]; then
-        echo "SSL"
         tempDir="$(mktemp -d)"
         
         if [ -z "$QPIDD_SSL_DB_DIR" ]; then
@@ -129,10 +127,7 @@ if [ "$1" = "qpidd" ]; then
     fi
     
     if [ ! -f "$QPIDD_SASL_CONFIG_DIR/qpidd.conf" ]; then
-        echo "SASL1"
-        echo "$sasl_plain $sasl_external"
         if [[ $sasl_plain -eq 1 || $sasl_external -eq 1 ]]; then
-            echo "SASL2"
             mkdir -p "$(dirname $QPIDD_SASL_CONFIG_DIR)"
         
             mechs=""
@@ -164,11 +159,9 @@ EOS
     fi
 
     if [ "$QPIDD_ACL_RULES" ]; then
-        echo "ACL passed"
         echo $QPIDD_ACL_RULES > $QPIDD_ACL_FILE
         need_config=1
     elif [ $QPIDD_ADMIN_USERNAME ]; then
-        echo "ACL generated"
         if [ ! -f "$QPIDD_ACL_FILE" ]; then
             cat > $QPIDD_ACL_FILE <<-EOS
 acl allow $QPIDD_ADMIN_USERNAME@QPID all
@@ -182,7 +175,6 @@ EOS
     # Generate broker config file if it doesn`t exist
     #####
     if [ $need_config -eq 1 ]; then
-        echo "CONFIG" 
         if [ -z "$QPIDD_CONFIG_FILE" ]; then
             QPIDD_CONFIG_FILE="$QPIDD_HOME/etc/qpidd.conf"
         fi
@@ -201,9 +193,7 @@ EOS
             fi
         fi
 
-        echo "$@"
         set -- "$@" "--config" "$QPIDD_CONFIG_FILE"
-        echo "$@"
     fi
 
     chown -R qpidd:qpidd "$QPIDD_HOME"
