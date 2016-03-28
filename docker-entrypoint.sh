@@ -10,6 +10,7 @@ if [ "$1" = "qpidd" ]; then
     sasl_external=0
     sasl_plain=0
     need_config=0
+    have_ssl=0
 
     # Home dir
     if [ -z "$QPIDD_HOME" ]; then
@@ -117,6 +118,7 @@ if [ "$1" = "qpidd" ]; then
         fi 
 
         need_config=1
+        have_ssl=0
     fi
 
     #####
@@ -186,10 +188,15 @@ EOS
                 cat > $QPIDD_CONFIG_FILE <<-EOS
 acl-file=$QPIDD_ACL_FILE
 sasl-config=$QPIDD_SASL_CONFIG_DIR
+EOS
+                
+                if [ $have_ssl -eq "1" ]; then
+                    cat >> $QPIDD_CONFIG_FILE <<-EOS
 ssl-cert-password-file=$QPIDD_SSL_DB_PASSWORD_FILE
 ssl-cert-name=serverKey
 ssl-cert-db=sql:$QPIDD_SSL_DB_DIR
 EOS
+                fi
             fi
         fi
 
