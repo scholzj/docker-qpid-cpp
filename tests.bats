@@ -19,7 +19,7 @@ sslPort() {
 @test "No options" {
     cont=$(sudo docker run -P -d $IMAGE:$VERSION)
     port=$(tcpPort)
-    run qpid-config -b 127.0.0.1:$port list queue
+    run qpid-config -b localhost:$port list queue
     [ "$status" -eq "0" ]
 }
 
@@ -40,21 +40,21 @@ sslPort() {
 @test "Username and password" {
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=jakub -e QPIDD_ADMIN_PASSWORD=big_secret -d $IMAGE:$VERSION)
     port=$(tcpPort)
-    run qpid-config -b 127.0.0.1:$port list queue
+    run qpid-config -b localhost:$port list queue
     [ "$status" -ne "0" ]
 
-    run qpid-config -b admin/admin@127.0.0.1:$port list queue
+    run qpid-config -b admin/admin@localhost:$port list queue
     [ "$status" -ne "0" ]    
 
-    run qpid-config -b jakub/big_secret@127.0.0.1:$port list queue
+    run qpid-config -b jakub/big_secret@localhost:$port list queue
     echo "Output: $output"
     [ "$status" -eq "0" ]
 }
 
-@test "ACL rules" {
+@test "Custom ACL rules" {
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_ACL_RULES="acl allow all all" -d $IMAGE:$VERSION)
     port=$(tcpPort)
-    run qpid-config -b admin/123456@127.0.0.1:$port list queue
+    run qpid-config -b admin/123456@localhost:$port list queue
     echo "Output: $output"
     [ "$status" -eq "0" ]
     sudo docker stop $cont
@@ -62,8 +62,14 @@ sslPort() {
 
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_ACL_RULES="acl deny-log all all" -d $IMAGE:$VERSION)
     port=$(tcpPort)
-    run qpid-config -b admin/123456@127.0.0.1:$port list queue
+    run qpid-config -b admin/123456@localhost:$port list queue
     [ "$status" -ne "0" ]
 }
 
+@test "Custom config file" {
+    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_CONFIG_OPTIONS="auth=no" -d $IMAGE:$VERSION)
+    port=$(tcpPort)
+    run qpid-config -b localhost:$port list queue
+    [ "$status" -eq "0" ]
+}
 
