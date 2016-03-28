@@ -19,7 +19,8 @@ sslPort() {
 @test "No options" {
     cont=$(sudo docker run -P -d $IMAGE:$VERSION)
     port=$(tcpPort)
-    run qpid-config -b localhost:$port list queue
+    echo "port=$port"
+    run qpid-config -b 127.0.0.1:$port list queue
     [ "$status" -eq "0" ]
 }
 
