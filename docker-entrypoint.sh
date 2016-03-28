@@ -48,36 +48,39 @@ if [ "$1" = "qpidd" ]; then
             QPIDD_SSL_DB_DIR="/var/lib/qpidd/etc/ssl"
         fi
 
-        mkdir -p "$(dirname $QPIDD_SSL_DB_DIR)"
+        mkdir -p "$QPIDD_SSL_DB_DIR"
 
         if [ -z "$QPIDD_SSL_DB_PASSWORD" ]; then
             QPIDD_SSL_DB_PASSWORD="$(date +%s | sha256sum | base64 | head -c 32 ; echo)"
         fi
 
         # Password file
+        touch $QPIDD_SSL_DB_DIR/pwdfile
         echo "$QPIDD_SSL_DB_PASSWORD" > $QPIDD_SSL_DB_DIR/pwdfile
         QPIDD_SSL_DB_PASSWORD_FILE="$QPIDD_SSL_DB_DIR/pwdfile"
 
         # Server key
+        echo "DEBUG: Server key"
         echo "$QPIDD_SSL_SERVER_PUBLIC_KEY" > $tempDir/serverKey.crt
         echo "$QPIDD_SSL_SERVER_PRIVATE_KEY" > $tempDir/serverKey.pem
-        openssl pkcs12 -export -in $tempDir/serverKey.crt -inkey $tempDir/serverKey.pem -out $tempDir/serverKey.p12 -passout $QPIDD_SSL_DB_PASSWORD_FILE
+        openssl pkcs12 -export -in $tempDir/serverKey.crt -inkey $tempDir/serverKey.pem -out $tempDir/serverKey.p12 -passout pass:$(cat $QPIDD_SSL_DB_PASSWORD_FILE)
 
         # Does the database already exist?
-        certutil -L -d sql:$QPIDD_SSL_DB_DIR >> /dev/null
-        if [ $?=0] ; then
+        echo "DEBUG: NSS DB"
+        #certutil -L -d sql:$QPIDD_SSL_DB_DIR >> /dev/null
+        if [[ ! -f $QPIDD_SSL_DB_DIR/cert9.db || ! -f $QPIDD_SSL_DB_DIR/key4.db ]] ; then
             certutil -N -d sql:$QPIDD_SSL_DB_DIR -f $QPIDD_SSL_DB_PASSWORD_FILE
         fi
 
         # Delete old server keys
-        certutil -L -d sql:$QPIDD_SSL_DB_DIR -n serverKey
-        res=$?
-        while [ $res=0 ]; do
+        exists=$(certutil -L -d sql:$QPIDD_SSL_DB_DIR | grep serverKey | wc -l)
+        while [ "$exists" -gt 0 ]; do
             certutil -D -d sql:$QPIDD_SSL_DB_DIR -n serverKey
             res=$?
         done
 
         # Load server certificate
+        echo "DEBUG: Loading keys"
         certutil -A -d sql:$QPIDD_SSL_DB_DIR -n serverKey -t ",," -i $tempDir/serverKey.crt -f $QPIDD_SSL_DB_PASSWORD_FILE
         pk12util -i $tempDir/serverKey.p12 -d sql:$QPIDD_SSL_DB_DIR -w $QPIDD_SSL_DB_PASSWORD_FILE -k $QPIDD_SSL_DB_PASSWORD_FILE
         
@@ -118,7 +121,7 @@ if [ "$1" = "qpidd" ]; then
         fi 
 
         need_config=1
-        have_ssl=0
+        have_ssl=1
     fi
 
     #####
