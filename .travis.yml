@@ -16,4 +16,6 @@ before_install:
 
 script:
   - docker build -t scholzj/qpid-cpp:0.34 .
+  - sudo docker run -P -d scholzj/qpid-cpp:0.34
+  - sudo docker ps
   - bats tests.bats
