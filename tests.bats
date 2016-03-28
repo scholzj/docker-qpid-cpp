@@ -3,6 +3,13 @@
 IMAGE="scholzj/qpid-cpp"
 VERSION="travis"
 
+IFSBAK=$IFS
+IFS=""
+SERVER_PUBLIC_KEY=$(cat ./test/localhost.crt)
+SERVER_PRIVATE_KEY=$(cat ./test/localhost.pem)
+CLIENT_KEY_DB=$(cat ./test/db.crt)
+IFS=$IFSBAK
+
 teardown() {
     sudo docker stop $cont
     sudo docker rm $cont
@@ -19,6 +26,7 @@ sslPort() {
 @test "No options" {
     cont=$(sudo docker run -P -d $IMAGE:$VERSION)
     port=$(tcpPort)
+    sleep 5 # give the image time to start
     run qpid-config -b localhost:$port list queue
     [ "$status" -eq "0" ]
 }
@@ -40,6 +48,7 @@ sslPort() {
 @test "Username and password" {
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=jakub -e QPIDD_ADMIN_PASSWORD=big_secret -d $IMAGE:$VERSION)
     port=$(tcpPort)
+    sleep 5 # give the image time to start
     run qpid-config -b localhost:$port list queue
     [ "$status" -ne "0" ]
 
@@ -54,6 +63,7 @@ sslPort() {
 @test "Custom ACL rules" {
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_ACL_RULES="acl allow all all" -d $IMAGE:$VERSION)
     port=$(tcpPort)
+    sleep 5 # give the image time to start
     run qpid-config -b admin/123456@localhost:$port list queue
     echo "Output: $output"
     [ "$status" -eq "0" ]
@@ -69,7 +79,22 @@ sslPort() {
 @test "Custom config file" {
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_CONFIG_OPTIONS="auth=no" -d $IMAGE:$VERSION)
     port=$(tcpPort)
+    sleep 5 # give the image time to start
     run qpid-config -b localhost:$port list queue
     [ "$status" -eq "0" ]
 }
+
+@test "Username and password over SSL" {
+    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -d $IMAGE:$VERSION)
+    port=$(tcpPort)
+    sport=$(sslPort)
+    sleep 5 # give the image time to start
+    run qpid-config -b admin/123456@localhost:$port list queue
+    [ "$status" -eq "0" ]
+
+    #run qpid-config -b admin/123456@localhost:$sport --ssl-certificate=test/localhost.crt list queue
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
+    [ "$status" -eq "0" ]
+}
+
 
