@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 IMAGE="scholzj/qpid-cpp"
-VERSION="0.34"
+VERSION="travis"
 
 teardown() {
     sudo docker stop $cont

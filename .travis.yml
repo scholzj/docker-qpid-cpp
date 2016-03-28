@@ -15,7 +15,7 @@ before_install:
   - sudo apt-get install -qq bats
 
 script:
-  - docker build -t scholzj/qpid-cpp:0.34 .
-  - sudo docker run -P -d scholzj/qpid-cpp:0.34
+  - docker build -t scholzj/qpid-cpp:travis .
+  - sudo docker run -P -d scholzj/qpid-cpp:travis
   - sudo docker ps
   - bats tests.bats
