@@ -199,7 +199,12 @@ ssl-cert-password-file=$QPIDD_SSL_DB_PASSWORD_FILE
 ssl-cert-name=serverKey
 ssl-cert-db=sql:$QPIDD_SSL_DB_DIR
 EOS
-                fi
+                    if [ $sasl_external -eq "1" ]; then
+                        cat >> $QPIDD_CONFIG_FILE <<-EOS
+ssl-require-client-authentication=yes
+EOS
+                    fi
+                 fi
             fi
         fi
 
