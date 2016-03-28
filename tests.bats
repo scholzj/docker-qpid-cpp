@@ -84,7 +84,7 @@ sslPort() {
     [ "$status" -eq "0" ]
 }
 
-@test "Username and password over SSL" {
+@test "Username and password over TCP and SSL" {
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -d $IMAGE:$VERSION)
     port=$(tcpPort)
     sport=$(sslPort)
@@ -97,4 +97,13 @@ sslPort() {
     [ "$status" -eq "0" ]
 }
 
+@test "SSL client authentication - CAs" {
+    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_CA="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
+    sport=$(sslPort)
+    sleep 5 # give the image time to start
+
+    #run qpid-config -b admin/123456@localhost:$sport --ssl-certificate=test/localhost.crt list queue
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
+    [ "$status" -eq "0" ]
+}
 
