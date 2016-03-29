@@ -12,8 +12,10 @@ addons:
 before_install:
   - sudo add-apt-repository ppa:duggan/bats --yes
   - sudo add-apt-repository ppa:qpid/released  --yes
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq bats qpid-tools libsasl2-2 libsasl2-modules libsasl2-modules-db
+  - sudo apt-get update -q
+  - sudo apt-get install -q libsasl2 libsasl2-modules libsasl2-modules-db
+  - sudo apt-get install -q bats
+  - sudo apt-get install -q qpid-tools
 
 script:
   - docker build -t scholzj/qpid-cpp:travis .
