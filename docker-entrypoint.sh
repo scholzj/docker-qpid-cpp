@@ -138,7 +138,7 @@ if [ "$1" = "qpidd" ]; then
             mechs=""
     
             if [ $sasl_plain -eq 1 ]; then
-                mechs="DIGEST-MD5 CRAM-MD5 $mechs"
+                mechs="PLAIN DIGEST-MD5 CRAM-MD5 $mechs"
             fi
         
             if [ $sasl_external -eq 1 ]; then
