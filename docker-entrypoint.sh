@@ -115,7 +115,7 @@ if [ "$1" = "qpidd" ]; then
 
              if [ -z "$QPIDD_SSL_TRUSTED_CA" ]; then
                   openssl req -subj '/CN=dummy_CA' -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout server.key -out server.crt
-                  certutil -A -d sql:$QPIDD_SSL_DB_DIR -f $QPIDD_SSL_DB_PASSWORD_FILE -t "P,," -i server.crt -n dummy_CA
+                  certutil -A -d sql:$QPIDD_SSL_DB_DIR -f $QPIDD_SSL_DB_PASSWORD_FILE -t "T,," -i server.crt -n dummy_CA
              fi
 
              rm peer_*
