@@ -9,8 +9,12 @@ fi
 if [ "$1" = "qpidd" ]; then
     sasl_external=0
     sasl_plain=0
-    need_config=0
     have_ssl=0
+    have_acl=0
+    have_sasl=0
+    have_store=0
+
+    have_config=0
 
     # Home dir
     if [ -z "$QPIDD_HOME" ]; then
@@ -35,7 +39,6 @@ if [ "$1" = "qpidd" ]; then
     if [[ "$QPIDD_ADMIN_USERNAME" && "$QPIDD_ADMIN_PASSWORD" ]]; then
         echo "$QPIDD_ADMIN_PASSWORD" | saslpasswd2 -f "$QPIDD_SASL_DB" -u QPID -p "$QPIDD_ADMIN_USERNAME"
         sasl_plain=1
-        need_config=1
     fi
 
     #####
@@ -125,7 +128,6 @@ if [ "$1" = "qpidd" ]; then
              sasl_external=1
         fi 
 
-        need_config=1
         have_ssl=1
     fi
 
@@ -157,7 +159,7 @@ auxprop_plugin: sasldb
 sasldb_path: $QPIDD_SASL_DB
 sql_select: dummy select
 EOS
-            need_config=1
+            have_sasl=1
         fi
     fi
 
@@ -170,49 +172,77 @@ EOS
 
     if [ "$QPIDD_ACL_RULES" ]; then
         echo $QPIDD_ACL_RULES > $QPIDD_ACL_FILE
-        need_config=1
+        have_acl=1
     elif [ $QPIDD_ADMIN_USERNAME ]; then
         if [ ! -f "$QPIDD_ACL_FILE" ]; then
             cat > $QPIDD_ACL_FILE <<-EOS
 acl allow $QPIDD_ADMIN_USERNAME@QPID all
 acl deny-log all all
 EOS
-        need_config=1
+            have_acl=1
         fi
     fi
 
     #####
+    # Store dir configuration
+    #####
+    if [ -z $QPIDD_STORE_DIR ]; then
+        QPIDD_STORE_DIR="$QPIDD_HOME/store"
+    fi
+    
+    mkdir -p "$QPIDD_STORE_DIR"
+    have_store=1
+
+    #####
     # Generate broker config file if it doesn`t exist
     #####
-    if [ $need_config -eq 1 ]; then
-        if [ -z "$QPIDD_CONFIG_FILE" ]; then
-            QPIDD_CONFIG_FILE="$QPIDD_HOME/etc/qpidd.conf"
-        fi
+    if [ -z "$QPIDD_CONFIG_FILE" ]; then
+        QPIDD_CONFIG_FILE="$QPIDD_HOME/etc/qpidd.conf"
+    fi
 
-        if [ "$QPIDD_CONFIG_OPTIONS" ]; then
-            echo $QPIDD_CONFIG_OPTIONS > $QPIDD_CONFIG_FILE
-        else
-            if [ ! -f "$QPIDD_CONFIG_FILE" ]; then
-                cat > $QPIDD_CONFIG_FILE <<-EOS
-acl-file=$QPIDD_ACL_FILE
+    if [ "$QPIDD_CONFIG_OPTIONS" ]; then
+        echo $QPIDD_CONFIG_OPTIONS > $QPIDD_CONFIG_FILE
+    else
+        if [ ! -f "$QPIDD_CONFIG_FILE" ]; then
+            if [ $have_sasl -eq "1" ]; then
+                cat >> $QPIDD_CONFIG_FILE <<-EOS
 sasl-config=$QPIDD_SASL_CONFIG_DIR
 EOS
-                
-                if [ $have_ssl -eq "1" ]; then
-                    cat >> $QPIDD_CONFIG_FILE <<-EOS
+                have_config=1
+            fi
+
+            if [ $have_acl -eq "1" ]; then
+                cat >> $QPIDD_CONFIG_FILE <<-EOS
+acl-file=$QPIDD_ACL_FILE
+EOS
+                have_config=1
+            fi
+
+            if [ $have_store -eq "1" ]; then
+                cat >> $QPIDD_CONFIG_FILE <<-EOS
+store-dir=$QPIDD_STORE_DIR
+EOS
+                have_config=1
+            fi
+               
+            if [ $have_ssl -eq "1" ]; then
+                cat >> $QPIDD_CONFIG_FILE <<-EOS
 ssl-cert-password-file=$QPIDD_SSL_DB_PASSWORD_FILE
 ssl-cert-name=serverKey
 ssl-cert-db=sql:$QPIDD_SSL_DB_DIR
 EOS
-                    if [ $sasl_external -eq "1" ]; then
-                        cat >> $QPIDD_CONFIG_FILE <<-EOS
+                have_config=1
+
+                if [ $sasl_external -eq "1" ]; then
+                    cat >> $QPIDD_CONFIG_FILE <<-EOS
 ssl-require-client-authentication=yes
 EOS
-                    fi
-                 fi
+                fi
             fi
         fi
+    fi
 
+    if [ $have_config -eq "1" ]; then
         set -- "$@" "--config" "$QPIDD_CONFIG_FILE"
     fi
 

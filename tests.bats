@@ -33,8 +33,8 @@ sslPort() {
 
 @test "Option passing" {
     cont=$(sudo docker run -P -d $IMAGE:$VERSION)
-    traceLines=$(sudo docker logs $cont 2>&1 | grep trace | wc -l)
     sleep 5 # give the image time to start
+    traceLines=$(sudo docker logs $cont 2>&1 | grep trace | wc -l)
     [ "$traceLines" -eq "0" ]
     sudo docker stop $cont
     sudo docker rm $cont
@@ -125,4 +125,12 @@ sslPort() {
     run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
     [ "$status" -eq "0" ]
 }
+
+@test "Store dir" {
+    cont=$(sudo docker run -P -e QPIDD_STORE_DIR=/var/lib/qpidd/my-store -d $IMAGE:$VERSION)
+    sleep 5 # give the image time to start
+    traceLines=$(sudo docker logs $cont 2>&1 | grep "store-dir=/var/lib/qpidd/my-store" | wc -l)
+    [ "$traceLines" -gt "0" ]
+}
+
 
