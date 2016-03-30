@@ -14,6 +14,7 @@ if [ "$1" = "qpidd" ]; then
     have_sasl=0
     have_store=0
     have_paging=0
+    have_sslnodict=0
 
     have_config=0
 
@@ -128,6 +129,10 @@ if [ "$1" = "qpidd" ]; then
 
              sasl_external=1
         fi 
+
+        if [ "$QPIDD_SSL_NO_DICT" ]; then
+            have_sslnodict=1
+        fi
 
         have_ssl=1
     fi
@@ -254,6 +259,12 @@ EOS
                 if [ $sasl_external -eq "1" ]; then
                     cat >> $QPIDD_CONFIG_FILE <<-EOS
 ssl-require-client-authentication=yes
+EOS
+                fi
+
+                if [ $sasl_sslnodict -eq "1" ]; then
+                    cat >> $QPIDD_CONFIG_FILE <<-EOS
+--ssl-sasl-no-dict=yes
 EOS
                 fi
             fi

@@ -111,7 +111,7 @@ sslPort() {
     [ "$status" -eq "0" ]
 }
 
-@test "SSL client authentication - Peerss" {
+@test "SSL client authentication - Peers" {
     cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_PEER="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
     sport=$(sslPort)
     sleep 5 # give the image time to start
