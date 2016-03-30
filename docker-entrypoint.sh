@@ -13,6 +13,7 @@ if [ "$1" = "qpidd" ]; then
     have_acl=0
     have_sasl=0
     have_store=0
+    have_paging=0
 
     have_config=0
 
@@ -194,6 +195,16 @@ EOS
     have_store=1
 
     #####
+    # Paging dir configuration
+    #####
+    if [ -z $QPIDD_PAGING_DIR ]; then
+        QPIDD_PAGING_DIR="$QPIDD_HOME/paging"
+    fi
+    
+    mkdir -p "$QPIDD_PAGING_DIR"
+    have_paging=1
+
+    #####
     # Generate broker config file if it doesn`t exist
     #####
     if [ -z "$QPIDD_CONFIG_FILE" ]; then
@@ -221,6 +232,13 @@ EOS
             if [ $have_store -eq "1" ]; then
                 cat >> $QPIDD_CONFIG_FILE <<-EOS
 store-dir=$QPIDD_STORE_DIR
+EOS
+                have_config=1
+            fi
+
+            if [ $have_paging -eq "1" ]; then
+                cat >> $QPIDD_CONFIG_FILE <<-EOS
+paging-dir=$QPIDD_PAGING_DIR
 EOS
                 have_config=1
             fi
