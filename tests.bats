@@ -7,7 +7,7 @@ IFSBAK=$IFS
 IFS=""
 SERVER_PUBLIC_KEY=$(cat ./test/localhost.crt)
 SERVER_PRIVATE_KEY=$(cat ./test/localhost.pem)
-CLIENT_KEY_DB=$(cat ./test/db.crt)
+CLIENT_KEY_DB=$(cat ./test/crt.db)
 IFS=$IFSBAK
 
 teardown() {
@@ -92,18 +92,37 @@ sslPort() {
     run qpid-config -b admin/123456@localhost:$port list queue
     [ "$status" -eq "0" ]
 
-    #run qpid-config -b admin/123456@localhost:$sport --ssl-certificate=test/localhost.crt list queue
     run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
     [ "$status" -eq "0" ]
 }
 
-#@test "SSL client authentication - CAs" {
-#    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_CA="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
-#    sport=$(sslPort)
-#    sleep 5 # give the image time to start
-#
-#    #run qpid-config -b admin/123456@localhost:$sport --ssl-certificate=test/localhost.crt list queue
-#    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
-#    [ "$status" -eq "0" ]
-#}
+@test "SSL client authentication - CAs" {
+    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_CA="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
+    sport=$(sslPort)
+    sleep 5 # give the image time to start
+
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
+    [ "$status" -ne "0" ]
+
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
+    [ "$status" -ne "0" ]
+
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
+    [ "$status" -eq "0" ]
+}
+
+@test "SSL client authentication - Peerss" {
+    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_PEER="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
+    sport=$(sslPort)
+    sleep 5 # give the image time to start
+
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
+    [ "$status" -ne "0" ]
+
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
+    [ "$status" -ne "0" ]
+
+    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
+    [ "$status" -eq "0" ]
+}
 
