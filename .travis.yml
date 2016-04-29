@@ -20,3 +20,8 @@ before_install:
 script:
   - docker build -t scholzj/qpid-cpp:travis .
   - bats tests.bats
+
+after_success:
+  - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker tag -f scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:0.34
+  - docker push docker.io/scholzj/qpid-cpp:0.34
