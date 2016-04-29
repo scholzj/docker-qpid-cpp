@@ -33,7 +33,7 @@ if [ "$1" = "qpidd" ]; then
     # If it doesn't exist, create it either with password from env or with default password
     #####
     if [ -z "$QPIDD_SASL_DB"]; then
-        QPIDD_SASL_DB="/var/lib/qpidd/etc/sasl/qpidd.sasldb"
+        QPIDD_SASL_DB="$QPIDD_HOME/etc/sasl/qpidd.sasldb"
     fi
     
     mkdir -p "$(dirname $QPIDD_SASL_DB)"
@@ -50,7 +50,7 @@ if [ "$1" = "qpidd" ]; then
         tempDir="$(mktemp -d)"
         
         if [ -z "$QPIDD_SSL_DB_DIR" ]; then
-            QPIDD_SSL_DB_DIR="/var/lib/qpidd/etc/ssl"
+            QPIDD_SSL_DB_DIR="$QPIDD_HOME/etc/ssl"
         fi
 
         mkdir -p "$QPIDD_SSL_DB_DIR"
