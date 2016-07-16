@@ -1,7 +1,8 @@
 [![Build Status](https://travis-ci.org/scholzj/docker-qpid-cpp.svg?branch=master)](https://travis-ci.org/scholzj/docker-qpid-cpp)
 
 # docker-qpid-cpp
-Docker image for Qpid C++ broker. The image is based on CentOS 7. The broker RPMs are usually from EPEL repositories for stable releases and from my own repositories for development and testing releases.
+
+Docker image for Qpid C++ broker. The image is based on CentOS 7.
 
 ## Using the image
 
