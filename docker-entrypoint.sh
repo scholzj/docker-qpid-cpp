@@ -275,7 +275,7 @@ EOS
         set -- "$@" "--config" "$QPIDD_CONFIG_FILE"
     fi
 
-    chown -R qpidd:qpidd "$QPIDD_HOME"
+    #chown -R qpidd:qpidd "$QPIDD_HOME"
 fi
 
 # else default to run whatever the user wanted like "bash"
