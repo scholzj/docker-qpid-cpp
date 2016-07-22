@@ -28,6 +28,16 @@ if [ "$1" = "qpidd" ]; then
         chown -R qpidd:qpidd "$QPIDD_HOME"
     fi
 
+    # Data dir (and also PID dir)
+    if [ -z "$QPIDD_DATA_DIR" ]; then
+        QPIDD_DATA_DIR="$QPIDD_HOME/work"
+    fi
+
+    if [ ! -d "$QPIDD_DATA_DIR" ]; then
+        mkdir -p "$QPIDD_DATA_DIR"
+        chown -R qpidd:qpidd "$QPIDD_DATA_DIR"
+    fi
+
     #####
     # If SASL database already exists, change the password only when it was provided from outside.
     # If it doesn't exist, create it either with password from env or with default password
@@ -35,7 +45,7 @@ if [ "$1" = "qpidd" ]; then
     if [ -z "$QPIDD_SASL_DB"]; then
         QPIDD_SASL_DB="$QPIDD_HOME/etc/sasl/qpidd.sasldb"
     fi
-    
+
     mkdir -p "$(dirname $QPIDD_SASL_DB)"
 
     if [[ "$QPIDD_ADMIN_USERNAME" && "$QPIDD_ADMIN_PASSWORD" ]]; then
@@ -48,7 +58,7 @@ if [ "$1" = "qpidd" ]; then
     #####
     if [[ "$QPIDD_SSL_SERVER_PUBLIC_KEY" && "$QPIDD_SSL_SERVER_PRIVATE_KEY" ]]; then
         tempDir="$(mktemp -d)"
-        
+
         if [ -z "$QPIDD_SSL_DB_DIR" ]; then
             QPIDD_SSL_DB_DIR="$QPIDD_HOME/etc/ssl"
         fi
@@ -88,12 +98,12 @@ if [ "$1" = "qpidd" ]; then
         echo "DEBUG: Loading keys"
         certutil -A -d sql:$QPIDD_SSL_DB_DIR -n serverKey -t ",," -i $tempDir/serverKey.crt -f $QPIDD_SSL_DB_PASSWORD_FILE
         pk12util -i $tempDir/serverKey.p12 -d sql:$QPIDD_SSL_DB_DIR -w $QPIDD_SSL_DB_PASSWORD_FILE -k $QPIDD_SSL_DB_PASSWORD_FILE
-        
+
         if [ "$QPIDD_SSL_TRUSTED_CA" ]; then
              pushd $tempDir
              echo "$QPIDD_SSL_TRUSTED_CA" > db.ca
              csplit db.ca '/^-----END CERTIFICATE-----$/1' '{*}' --elide-empty-files --silent --prefix=ca_
-             
+
              counter=1
              for cert in $(ls ca_*); do
                  certutil -A -d sql:$QPIDD_SSL_DB_DIR -f $QPIDD_SSL_DB_PASSWORD_FILE -t "T,," -i $cert -n ca_$counter
@@ -103,15 +113,15 @@ if [ "$1" = "qpidd" ]; then
              rm ca_*
              rm db.ca
              popd
-             
+
              sasl_external=1
-        fi 
+        fi
 
         if [ "$QPIDD_SSL_TRUSTED_PEER" ]; then
              pushd $tempDir
              echo "$QPIDD_SSL_TRUSTED_PEER" > db.peer
              csplit db.peer '/^-----END CERTIFICATE-----$/1' '{*}' --elide-empty-files --silent --prefix=peer_
-             
+
              counter=1
              for cert in $(ls peer_*); do
                  certutil -A -d sql:$QPIDD_SSL_DB_DIR -f $QPIDD_SSL_DB_PASSWORD_FILE -t "P,," -i $cert -n peer_$counter
@@ -128,7 +138,7 @@ if [ "$1" = "qpidd" ]; then
              popd
 
              sasl_external=1
-        fi 
+        fi
 
         if [ "$QPIDD_SSL_NO_DICT" ]; then
             have_sslnodict=1
@@ -143,21 +153,21 @@ if [ "$1" = "qpidd" ]; then
     if [ -z "$QPIDD_SASL_CONFIG_DIR" ]; then
         QPIDD_SASL_CONFIG_DIR="$QPIDD_HOME/etc/sasl/"
     fi
-    
+
     if [ ! -f "$QPIDD_SASL_CONFIG_DIR/qpidd.conf" ]; then
         if [[ $sasl_plain -eq 1 || $sasl_external -eq 1 ]]; then
             mkdir -p "$(dirname $QPIDD_SASL_CONFIG_DIR)"
-        
+
             mechs=""
-    
+
             if [ $sasl_plain -eq 1 ]; then
                 mechs="PLAIN DIGEST-MD5 CRAM-MD5 $mechs"
             fi
-        
+
             if [ $sasl_external -eq 1 ]; then
                 mechs="EXTERNAL $mechs"
             fi
-    
+
             cat > $QPIDD_SASL_CONFIG_DIR/qpidd.conf <<-EOS
 mech_list: $mechs
 pwcheck_method: auxprop
@@ -195,7 +205,7 @@ EOS
     if [ -z $QPIDD_STORE_DIR ]; then
         QPIDD_STORE_DIR="$QPIDD_HOME/store"
     fi
-    
+
     mkdir -p "$QPIDD_STORE_DIR"
     have_store=1
 
@@ -205,7 +215,7 @@ EOS
     if [ -z $QPIDD_PAGING_DIR ]; then
         QPIDD_PAGING_DIR="$QPIDD_HOME/paging"
     fi
-    
+
     mkdir -p "$QPIDD_PAGING_DIR"
     have_paging=1
 
@@ -220,6 +230,11 @@ EOS
         echo $QPIDD_CONFIG_OPTIONS > $QPIDD_CONFIG_FILE
     else
         if [ ! -f "$QPIDD_CONFIG_FILE" ]; then
+            cat >> $QPIDD_CONFIG_FILE <<-EOS
+data-dir=$QPIDD_DATA_DIR
+pid-dir=$QPIDD_DATA_DIR
+EOS
+
             if [ $have_sasl -eq "1" ]; then
                 cat >> $QPIDD_CONFIG_FILE <<-EOS
 sasl-config=$QPIDD_SASL_CONFIG_DIR
@@ -247,7 +262,7 @@ paging-dir=$QPIDD_PAGING_DIR
 EOS
                 have_config=1
             fi
-               
+
             if [ $have_ssl -eq "1" ]; then
                 cat >> $QPIDD_CONFIG_FILE <<-EOS
 ssl-cert-password-file=$QPIDD_SSL_DB_PASSWORD_FILE
