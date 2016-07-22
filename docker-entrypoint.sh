@@ -229,12 +229,12 @@ EOS
     if [ "$QPIDD_CONFIG_OPTIONS" ]; then
         echo $QPIDD_CONFIG_OPTIONS > $QPIDD_CONFIG_FILE
     else
-        cat >> $QPIDD_CONFIG_FILE <<-EOS
+        if [ ! -f "$QPIDD_CONFIG_FILE" ]; then
+            cat >> $QPIDD_CONFIG_FILE <<-EOS
 data-dir=$QPIDD_DATA_DIR
 pid-dir=$QPIDD_DATA_DIR
 EOS
 
-        if [ ! -f "$QPIDD_CONFIG_FILE" ]; then
             if [ $have_sasl -eq "1" ]; then
                 cat >> $QPIDD_CONFIG_FILE <<-EOS
 sasl-config=$QPIDD_SASL_CONFIG_DIR
