@@ -9,6 +9,7 @@ Docker image for Qpid C++ broker. The image is based on CentOS 7.
 The Docker image can be configured using following envrionment variables.
 
 - `QPIDD_HOME` defines the broker home directory, where most files will be stored. By default `/var/lib/qpidd`
+- `QPIDD_DATA_DIR` defines broker's data-dir and pid-dir options. By default `$QPIDD_HOME/work`
 - `QPIDD_SASL_DB` defines the path to the SASL databases containing users and passwors. By default `$QPIDD_HOME/etc/sasl/qpidd.sasldb`
 - `QPIDD_SASL_CONFIG_DIR` defines the directory where the SASL cofngiuration file will be stored. By default `$QPIDD_HOME/etc/sasl/`
 - `QPIDD_ADMIN_USERNAME` and `QPIDD_ADMIN_PASSWORD` allow to specify the username and password for the admin user which will be created. If not specified, no user will be created.
