@@ -279,7 +279,7 @@ EOS
 
                 if [ $sasl_sslnodict -eq "1" ]; then
                     cat >> $QPIDD_CONFIG_FILE <<-EOS
---ssl-sasl-no-dict=yes
+ssl-sasl-no-dict=yes
 EOS
                 fi
             fi
