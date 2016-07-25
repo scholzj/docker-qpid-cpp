@@ -283,6 +283,8 @@ ssl-sasl-no-dict=yes
 EOS
                 fi
             fi
+        else
+            have_config=1
         fi
     fi
 
