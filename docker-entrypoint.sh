@@ -227,7 +227,10 @@ EOS
     fi
 
     if [ "$QPIDD_CONFIG_OPTIONS" ]; then
-        echo $QPIDD_CONFIG_OPTIONS > $QPIDD_CONFIG_FILE
+        cat >> $QPIDD_CONFIG_FILE <<-EOS
+$QPIDD_CONFIG_OPTIONS
+EOS
+	      have_config=1
     else
         if [ ! -f "$QPIDD_CONFIG_FILE" ]; then
             cat >> $QPIDD_CONFIG_FILE <<-EOS
