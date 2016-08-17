@@ -15,6 +15,7 @@ if [ "$1" = "qpidd" ]; then
     have_store=0
     have_paging=0
     have_sslnodict=0
+    have_auth=0
 
     have_config=0
 
@@ -51,6 +52,7 @@ if [ "$1" = "qpidd" ]; then
     if [[ "$QPIDD_ADMIN_USERNAME" && "$QPIDD_ADMIN_PASSWORD" ]]; then
         echo "$QPIDD_ADMIN_PASSWORD" | saslpasswd2 -f "$QPIDD_SASL_DB" -u QPID -p "$QPIDD_ADMIN_USERNAME"
         sasl_plain=1
+        have_auth=1
     fi
 
     #####
@@ -115,6 +117,7 @@ if [ "$1" = "qpidd" ]; then
              popd
 
              sasl_external=1
+             have_auth=1
         fi
 
         if [ "$QPIDD_SSL_TRUSTED_PEER" ]; then
@@ -138,6 +141,7 @@ if [ "$1" = "qpidd" ]; then
              popd
 
              sasl_external=1
+             have_auth=1
         fi
 
         if [ "$QPIDD_SSL_NO_DICT" ]; then
@@ -227,7 +231,10 @@ EOS
     fi
 
     if [ "$QPIDD_CONFIG_OPTIONS" ]; then
-        echo $QPIDD_CONFIG_OPTIONS > $QPIDD_CONFIG_FILE
+        cat >> $QPIDD_CONFIG_FILE <<-EOS
+$QPIDD_CONFIG_OPTIONS
+EOS
+	      have_config=1
     else
         if [ ! -f "$QPIDD_CONFIG_FILE" ]; then
             cat >> $QPIDD_CONFIG_FILE <<-EOS
@@ -238,6 +245,13 @@ EOS
             if [ $have_sasl -eq "1" ]; then
                 cat >> $QPIDD_CONFIG_FILE <<-EOS
 sasl-config=$QPIDD_SASL_CONFIG_DIR
+EOS
+                have_config=1
+            fi
+
+            if [ $have_auth -eq "1" ]; then
+                cat >> $QPIDD_CONFIG_FILE <<-EOS
+auth=yes
 EOS
                 have_config=1
             fi
