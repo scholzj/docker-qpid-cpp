@@ -13,7 +13,7 @@ before_install:
   - sudo add-apt-repository ppa:duggan/bats --yes
   - sudo add-apt-repository ppa:qpid/released  --yes
   - sudo apt-get update -q
-  - sudo apt-get install -q libsasl2-2 libsasl2-modules libsasl2-modules-db
+  - sudo apt-get install -q libsasl2-2 libsasl2-modules libsasl2-modules-db curl
   - sudo apt-get install -q bats
   - sudo apt-get install -q qpid-tools
 
@@ -25,3 +25,4 @@ after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; fi
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:devel; fi
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker push docker.io/scholzj/qpid-cpp:devel; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then curl -X POST https://circleci.com/api/v1/project/scholzj/docker-java-client-tests?circle-token=2c3d966680613966227bb11bb252ce6288222ddb; fi
