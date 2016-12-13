@@ -23,5 +23,7 @@ script:
 
 after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; fi
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:1.36.0-rc1; fi
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker push docker.io/scholzj/qpid-cpp:1.36.0-rc1; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:1.36.0; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker push docker.io/scholzj/qpid-cpp:1.36.0; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:latest; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker push docker.io/scholzj/qpid-cpp:latest; fi
