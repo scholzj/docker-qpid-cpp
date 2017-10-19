@@ -14,6 +14,7 @@ RUN curl -o /etc/yum.repos.d/qpid-proton-testing.repo http://repo.effectivemessa
 
 ENV QPIDD_VERSION DEVEL
 
+RUN chown -R qpidd:qpidd /var/lib/qpidd
 VOLUME /var/lib/qpidd
 
 # Add entrypoint
