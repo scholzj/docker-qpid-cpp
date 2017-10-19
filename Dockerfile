@@ -5,7 +5,7 @@ MAINTAINER 	JAkub Scholz "www@scholzj.com"
 RUN groupadd -r qpidd && useradd -r -d /var/lib/qpidd -m -g qpidd qpidd
 
 # Install all dependencies
-RUN curl -o /etc/yum.repos.d/qpid-proton-devel.repo http://repo.effectivemessaging.com/qpid-proton-devel.repo \
+RUN curl -o /etc/yum.repos.d/qpid-proton-testing.repo http://repo.effectivemessaging.com/qpid-proton-testing.repo \
         && curl -o /etc/yum.repos.d/qpid-cpp-devel.repo http://repo.effectivemessaging.com/qpid-cpp-devel.repo \
         && curl -o /etc/yum.repos.d/qpid-python-devel.repo http://repo.effectivemessaging.com/qpid-python-devel.repo \
         && yum -y install epel-release \
