@@ -25,4 +25,4 @@ after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; fi
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:devel; fi
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then docker push docker.io/scholzj/qpid-cpp:devel; fi
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then curl -X POST https://circleci.com/api/v1/project/scholzj/docker-java-client-tests?circle-token=2c3d966680613966227bb11bb252ce6288222ddb; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then curl -u "2c3d966680613966227bb11bb252ce6288222ddb:" -X POST https://circleci.com/api/v1.1/project/github/scholzj/docker-java-client-tests/tree/master; fi
