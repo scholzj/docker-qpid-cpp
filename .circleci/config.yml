@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: docker:stable-git
+      - image: scholzj/circleci-centos-amqp:latest
     steps:
       - setup_remote_docker
       - checkout
