@@ -24,10 +24,10 @@ sslPort() {
 }
 
 @test "No options" {
-    cont=$(sudo docker run -P -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -d $IMAGE:$VERSION)
     port=$(tcpPort)
     sleep 5 # give the image time to start
-    run qpid-config -b localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b qpidd:5672 list queue
     [ "$status" -eq "0" ]
 }
 
@@ -46,88 +46,88 @@ sslPort() {
 }
 
 @test "Username and password" {
-    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=jakub -e QPIDD_ADMIN_PASSWORD=big_secret -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_ADMIN_USERNAME=jakub -e QPIDD_ADMIN_PASSWORD=big_secret -d $IMAGE:$VERSION)
     port=$(tcpPort)
     sleep 5 # give the image time to start
-    run qpid-config -b localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b qpidd:5672 list queue
     [ "$status" -ne "0" ]
 
-    run qpid-config -b admin/admin@localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b admin/admin@qpidd:5672 list queue
     [ "$status" -ne "0" ]    
 
-    run qpid-config -b jakub/big_secret@localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b jakub/big_secret@qpidd:5672 list queue
     echo "Output: $output"
     [ "$status" -eq "0" ]
 }
 
 @test "Custom ACL rules" {
-    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_ACL_RULES="acl allow all all" -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_ACL_RULES="acl allow all all" -d $IMAGE:$VERSION)
     port=$(tcpPort)
     sleep 5 # give the image time to start
-    run qpid-config -b admin/123456@localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b admin/123456@qpidd:5672 list queue
     echo "Output: $output"
     [ "$status" -eq "0" ]
     sudo docker stop $cont
     sudo docker rm $cont
 
-    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_ACL_RULES="acl deny-log all all" -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_ACL_RULES="acl deny-log all all" -d $IMAGE:$VERSION)
     port=$(tcpPort)
-    run qpid-config -b admin/123456@localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b admin/123456@qpidd:5672 list queue
     [ "$status" -ne "0" ]
 }
 
 @test "Custom config file" {
-    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_CONFIG_OPTIONS="auth=no" -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_CONFIG_OPTIONS="auth=no" -d $IMAGE:$VERSION)
     port=$(tcpPort)
     sleep 5 # give the image time to start
-    run qpid-config -b localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b qpidd:5672 list queue
     [ "$status" -eq "0" ]
 }
 
 @test "Username and password over TCP and SSL" {
-    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -d $IMAGE:$VERSION)
     port=$(tcpPort)
     sport=$(sslPort)
     sleep 5 # give the image time to start
-    run qpid-config -b admin/123456@localhost:$port list queue
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b admin/123456@qpidd:5672 list queue
     [ "$status" -eq "0" ]
 
-    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
+    run docker run --link qpidd:qpidd -v $(pwd)/test:/test scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error
     [ "$status" -eq "0" ]
 }
 
 @test "SSL client authentication - CAs" {
-    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_CA="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_CA="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
     sport=$(sslPort)
     sleep 5 # give the image time to start
 
-    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error
     [ "$status" -ne "0" ]
 
-    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
     [ "$status" -ne "0" ]
 
-    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
     [ "$status" -eq "0" ]
 }
 
 @test "SSL client authentication - Peers" {
-    cont=$(sudo docker run -P -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_PEER="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_ADMIN_USERNAME=admin -e QPIDD_ADMIN_PASSWORD=123456 -e QPIDD_SSL_SERVER_PUBLIC_KEY="$SERVER_PUBLIC_KEY" -e QPIDD_SSL_SERVER_PRIVATE_KEY="$SERVER_PRIVATE_KEY" -e QPIDD_SSL_TRUSTED_PEER="$CLIENT_KEY_DB" -d $IMAGE:$VERSION)
     sport=$(sslPort)
     sleep 5 # give the image time to start
 
-    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error
     [ "$status" -ne "0" ]
 
-    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
     [ "$status" -ne "0" ]
 
-    run openssl s_client -host localhost -port $sport -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
+    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
     [ "$status" -eq "0" ]
 }
 
 @test "Store dir" {
-    cont=$(sudo docker run -P -e QPIDD_STORE_DIR=/var/lib/qpidd/my-store -d $IMAGE:$VERSION)
+    cont=$(sudo docker run -P --name qpidd -e QPIDD_STORE_DIR=/var/lib/qpidd/my-store -d $IMAGE:$VERSION)
     sleep 5 # give the image time to start
     traceLines=$(sudo docker logs $cont 2>&1 | grep "store-dir=/var/lib/qpidd/my-store" | wc -l)
     [ "$traceLines" -gt "0" ]
