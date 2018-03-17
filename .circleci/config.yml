@@ -36,7 +36,7 @@ jobs:
       - deploy:
           name: Trigger Docker image build
           command: |
-            curl -u ${CIRCLE_TOKEN}: \
+            curl -u ${CIRCLECI_TOKEN}: \
               -d build_parameters[CIRCLE_JOB]=build \
               https://circleci.com/api/v1.1/project/github/scholzj/docker-java-client-tests/tree/$CIRCLE_BRANCH
 workflows:
