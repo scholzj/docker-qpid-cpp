@@ -12,7 +12,7 @@ IFS=$IFSBAK
 
 setup() {
     # Volume container
-    docker create -v /test --name testdata alpine:3.4 /bin/true
+    docker create -v /test --name testdata scholzj/circleci-centos-amqp:latest /bin/true
     docker cp ./test testdata:/
 }
 
