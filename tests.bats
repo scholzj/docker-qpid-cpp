@@ -10,9 +10,18 @@ SERVER_PRIVATE_KEY=$(cat ./test/localhost.pem)
 CLIENT_KEY_DB=$(cat ./test/crt.db)
 IFS=$IFSBAK
 
+setup() {
+    # Volume container
+    docker create -v /test --name testdata alpine:3.4 /bin/true
+    docker cp ./test testdata:/
+}
+
 teardown() {
     docker stop $cont
     docker rm $cont
+    # Delete volume container
+    docker stop testdata
+    docker rm testdata
 }
 
 tcpPort() {
@@ -92,7 +101,7 @@ sslPort() {
     run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest qpid-config -b admin/123456@qpidd:5672 list queue
     [ "$status" -eq "0" ]
 
-    run docker run --link qpidd:qpidd -v $(pwd)/test:/test scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error
+    run docker run --link qpidd:qpidd --volumes-from testdata scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error
     [ "$status" -eq "0" ]
 }
 
@@ -101,13 +110,13 @@ sslPort() {
     sport=$(sslPort)
     sleep 5 # give the image time to start
 
-    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error
+    run docker run --link qpidd:qpidd --volumes-from testdata scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error
     [ "$status" -ne "0" ]
 
-    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
+    run docker run --link qpidd:qpidd --volumes-from testdata scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error -cert /test/wrong_user.crt -key /test/wrong_user.pem
     [ "$status" -ne "0" ]
 
-    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
+    run docker run --link qpidd:qpidd --volumes-from testdata scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error -cert /test/user1.crt -key /test/user1.pem
     [ "$status" -eq "0" ]
 }
 
@@ -116,13 +125,13 @@ sslPort() {
     sport=$(sslPort)
     sleep 5 # give the image time to start
 
-    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error
+    run docker run --link qpidd:qpidd --volumes-from testdata scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error
     [ "$status" -ne "0" ]
 
-    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/wrong_user.crt -key test/wrong_user.pem
+    run docker run --link qpidd:qpidd --volumes-from testdata scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error -cert /test/wrong_user.crt -key /test/wrong_user.pem
     [ "$status" -ne "0" ]
 
-    run docker run --link qpidd:qpidd scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile test/localhost.crt -verify 100 -verify_return_error -cert test/user1.crt -key test/user1.pem
+    run docker run --link qpidd:qpidd --volumes-from testdata scholzj/circleci-centos-amqp:latest openssl s_client -host qpidd -port 5671 -CAfile /test/localhost.crt -verify 100 -verify_return_error -cert /test/user1.crt -key /test/user1.pem
     [ "$status" -eq "0" ]
 }
 
@@ -132,5 +141,3 @@ sslPort() {
     traceLines=$(docker logs $cont 2>&1 | grep "store-dir=/var/lib/qpidd/my-store" | wc -l)
     [ "$traceLines" -gt "0" ]
 }
-
-
