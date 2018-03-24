@@ -12,7 +12,7 @@ RUN curl -o /etc/yum.repos.d/qpid-proton-stable.repo http://repo.effectivemessag
         && yum -y --setopt=tsflag=nodocs install openssl cyrus-sasl cyrus-sasl-md5 cyrus-sasl-plain qpid-cpp-server qpid-cpp-server-linearstore qpid-cpp-server-xml qpid-tools qpid-proton-c \
         && yum clean all
 
-ENV QPIDD_VERSION DEVEL
+ENV QPIDD_VERSION 1.38.0-RC1
 
 RUN chown -R qpidd:qpidd /var/lib/qpidd
 VOLUME /var/lib/qpidd
