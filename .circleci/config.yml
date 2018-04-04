@@ -17,16 +17,16 @@ jobs:
           command: docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
       - deploy:
           name: Tag docker image
-          command: docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:1.38.0-rc1
+          command: docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:1.38.0
       - deploy:
           name: Push Docker image
-          command: docker push docker.io/scholzj/qpid-cpp:1.38.0-rc1
-      # - deploy:
-      #     name: Tag Docker image
-      #     command: docker docker tag -f scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:latest
-      # - deploy:
-      #     name: Push Docker image
-      #     command: push docker.io/scholzj/qpid-cpp:latest
+          command: docker push docker.io/scholzj/qpid-cpp:1.38.0
+      - deploy:
+          name: Tag docker image
+          command: docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:latest
+      - deploy:
+          name: Push Docker image
+          command: docker push docker.io/scholzj/qpid-cpp:latest
       - deploy:
           name: Trigger Docker image build
           command: |
