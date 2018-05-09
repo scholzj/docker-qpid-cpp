@@ -9,7 +9,7 @@ RUN curl -o /etc/yum.repos.d/qpid-proton-devel.repo http://repo.effectivemessagi
         && curl -o /etc/yum.repos.d/qpid-cpp-devel.repo http://repo.effectivemessaging.com/qpid-cpp-devel.repo \
         && curl -o /etc/yum.repos.d/qpid-python-devel.repo http://repo.effectivemessaging.com/qpid-python-devel.repo \
         && yum -y install epel-release \
-        && yum -y --setopt=tsflag=nodocs install openssl cyrus-sasl cyrus-sasl-md5 cyrus-sasl-plain qpid-cpp-server qpid-cpp-server-linearstore qpid-cpp-server-xml qpid-tools qpid-proton-c \
+        && yum -y --setopt=tsflag=nodocs --exclude=python2-qpid\* install openssl cyrus-sasl cyrus-sasl-md5 cyrus-sasl-plain qpid-cpp-server qpid-cpp-server-linearstore qpid-cpp-server-xml qpid-tools qpid-proton-c \
         && yum clean all
 
 ENV QPIDD_VERSION DEVEL
