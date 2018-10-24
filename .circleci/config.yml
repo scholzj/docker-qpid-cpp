@@ -29,10 +29,10 @@ jobs:
       #     command: docker push docker.io/scholzj/qpid-cpp:0.21.0
       # - deploy:
       #     name: Tag Docker image
-      #     command: docker docker tag -f scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:latest
+      #     command: docker tag scholzj/qpid-cpp:travis docker.io/scholzj/qpid-cpp:latest
       # - deploy:
       #     name: Push Docker image
-      #     command: push docker.io/scholzj/qpid-cpp:latest
+      #     command: docker push docker.io/scholzj/qpid-cpp:latest
       - deploy:
           name: Trigger Docker image build
           command: |
