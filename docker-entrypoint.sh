@@ -291,7 +291,7 @@ ssl-require-client-authentication=yes
 EOS
                 fi
 
-                if [ $sasl_sslnodict -eq "1" ]; then
+                if [ $have_sslnodict -eq "1" ]; then
                     cat >> $QPIDD_CONFIG_FILE <<-EOS
 ssl-sasl-no-dict=yes
 EOS
